@@ -76,6 +76,7 @@ def play(args):
     num_frames = int(video_duration / env.dt)
     print(f'gathering {num_frames} frames')
     video = None
+    video_path = os.path.join(LEGGED_GYM_ROOT_DIR, 'record.mp4')
 
     for i in range(num_frames):
         actions = policy(obs.detach())
@@ -89,20 +90,25 @@ def play(args):
 
         if RECORD_FRAMES:
             frames_path = os.path.join(LEGGED_GYM_ROOT_DIR, 'logs', train_cfg.runner.experiment_name, 'exported', 'frames')
-            if not os.path.isdir(frames_path):
-                os.mkdir(frames_path)
-            filename = os.path.join('logs', train_cfg.runner.experiment_name, 'exported', 'frames', f"{img_idx}.png")
+            os.makedirs(frames_path, exist_ok=True)
+            filename = os.path.join(frames_path, f"{img_idx}.png")
             env.gym.write_viewer_image_to_file(env.viewer, filename)
             img = cv2.imread(filename)
+            if img is None:
+                continue
             if video is None:
-                video = cv2.VideoWriter('record.mp4', cv2.VideoWriter_fourcc(*'MP4V'), int(1 / env.dt), (img.shape[1],img.shape[0]))
+                video = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'MP4V'), int(1 / env.dt), (img.shape[1], img.shape[0]))
             video.write(img)
-            img_idx += 1 
+            img_idx += 1
 
-    video.release()
+    if video is not None:
+        video.release()
+        print(f"Video saved to: {video_path}")
+    else:
+        print("No video was written. Set RECORD_FRAMES=True to enable recording.")
 
 if __name__ == '__main__':
     EXPORT_POLICY = True
-    RECORD_FRAMES = False
+    RECORD_FRAMES = True
     args = get_args()
     play(args)

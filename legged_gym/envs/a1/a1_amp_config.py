@@ -28,10 +28,12 @@
 #
 # Copyright (c) 2021 ETH Zurich, Nikita Rudin
 import glob
+import os
 
 from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobotCfgPPO
+from legged_gym import LEGGED_GYM_ROOT_DIR
 
-MOTION_FILES = glob.glob('datasets/mocap_motions/*')
+MOTION_FILES = glob.glob(os.path.join(LEGGED_GYM_ROOT_DIR, 'datasets/mocap_motions/*'))
 
 
 class A1AMPCfg( LeggedRobotCfg ):
