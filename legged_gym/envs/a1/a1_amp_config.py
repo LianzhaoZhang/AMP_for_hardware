@@ -33,8 +33,8 @@ import os
 from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobotCfgPPO
 from legged_gym import LEGGED_GYM_ROOT_DIR
 
-MOTION_FILES = glob.glob(os.path.join(LEGGED_GYM_ROOT_DIR, 'datasets/mocap_motions/*'))
-
+# MOTION_FILES = glob.glob(os.path.join(LEGGED_GYM_ROOT_DIR, 'datasets/mocap_motions/*'))
+MOTION_FILES = glob.glob(os.path.join(LEGGED_GYM_ROOT_DIR, 'datasets/nmpc_wbc_motions0311_pinocchio/*'))
 
 class A1AMPCfg( LeggedRobotCfg ):
 
@@ -55,15 +55,15 @@ class A1AMPCfg( LeggedRobotCfg ):
             'FR_hip_joint': 0.0 ,  # [rad]
             'RR_hip_joint': 0.0,   # [rad]
 
-            'FL_thigh_joint': 0.9,     # [rad]
-            'RL_thigh_joint': 0.9,   # [rad]
-            'FR_thigh_joint': 0.9,     # [rad]
-            'RR_thigh_joint': 0.9,   # [rad]
+            'FL_thigh_joint': 0.72,     # [rad]
+            'RL_thigh_joint': 0.72,   # [rad]
+            'FR_thigh_joint': 0.72,     # [rad]
+            'RR_thigh_joint': 0.72,   # [rad]
 
-            'FL_calf_joint': -1.8,   # [rad]
-            'RL_calf_joint': -1.8,    # [rad]
-            'FR_calf_joint': -1.8,  # [rad]
-            'RR_calf_joint': -1.8,    # [rad]
+            'FL_calf_joint': -1.44,   # [rad]
+            'RL_calf_joint': -1.44,    # [rad]
+            'FR_calf_joint': -1.44,  # [rad]
+            'RR_calf_joint': -1.44,    # [rad]
         }
 
     class control( LeggedRobotCfg.control ):
@@ -114,19 +114,19 @@ class A1AMPCfg( LeggedRobotCfg ):
 
     class rewards( LeggedRobotCfg.rewards ):
         soft_dof_pos_limit = 0.9
-        base_height_target = 0.25
+        base_height_target = 0.3
         class scales( LeggedRobotCfg.rewards.scales ):
             termination = 0.0
             tracking_lin_vel = 1.5 * 1. / (.005 * 6)
-            tracking_ang_vel = 0.5 * 1. / (.005 * 6)
-            lin_vel_z = 0.0
+            tracking_ang_vel = 1.0 * 1. / (.005 * 6)
+            lin_vel_z = -1.0
             ang_vel_xy = 0.0
             orientation = 0.0
             torques = 0.0
             dof_vel = 0.0
             dof_acc = 0.0
             base_height = 0.0 
-            feet_air_time =  0.0
+            feet_air_time =  0.05
             collision = 0.0
             feet_stumble = 0.0 
             action_rate = 0.0
@@ -140,9 +140,9 @@ class A1AMPCfg( LeggedRobotCfg ):
         resampling_time = 10. # time before command are changed[s]
         heading_command = False # if true: compute ang vel command from heading error
         class ranges:
-            lin_vel_x = [-1.0, 2.0] # min max [m/s]
-            lin_vel_y = [-0.3, 0.3]   # min max [m/s]
-            ang_vel_yaw = [-1.57, 1.57]    # min max [rad/s]
+            lin_vel_x = [-0.8, 1.0] # min max [m/s]
+            lin_vel_y = [-0.5, 0.5]   # min max [m/s]
+            ang_vel_yaw = [-1, 1]    # min max [rad/s]
             heading = [-3.14, 3.14]
 
 class A1AMPCfgPPO( LeggedRobotCfgPPO ):
@@ -158,7 +158,8 @@ class A1AMPCfgPPO( LeggedRobotCfgPPO ):
         experiment_name = 'a1_amp_example'
         algorithm_class_name = 'AMPPPO'
         policy_class_name = 'ActorCritic'
-        max_iterations = 500000 # number of policy updates
+        max_iterations = 40000 # number of policy updates
+        save_interval = 200 # check for potential saves every this many iterations
 
         amp_reward_coef = 2.0
         amp_motion_files = MOTION_FILES
