@@ -113,6 +113,19 @@ class LeggedRobotCfg(BaseConfig):
         density = 0.001
         angular_damping = 0.
         linear_damping = 0.
+
+        # Robot kinematic constants for AMP foot position computation.
+        # Defaults are A1 values. Override in robot-specific configs.
+        com_offset = [0.012731, 0.002186, 0.000515]
+        hip_offsets = [
+            [0.183, 0.047, 0.],    # FL
+            [0.183, -0.047, 0.],   # FR
+            [-0.183, 0.047, 0.],   # RL
+            [-0.183, -0.047, 0.],  # RR
+        ]
+        l_hip = 0.08505
+        l_up = 0.2
+        l_low = 0.2
         max_angular_velocity = 1000.
         max_linear_velocity = 1000.
         armature = 0.

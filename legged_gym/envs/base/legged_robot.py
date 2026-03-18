@@ -80,6 +80,14 @@ class LeggedRobot(BaseTask):
         self._parse_cfg(self.cfg)
         super().__init__(self.cfg, sim_params, physics_engine, sim_device, headless)
 
+        # Robot kinematic constants from config (defaults = A1)
+        asset_cfg = self.cfg.asset
+        self.com_offset = torch.tensor(asset_cfg.com_offset, device=self.device)
+        self.hip_offsets = torch.tensor(asset_cfg.hip_offsets, device=self.device) + self.com_offset
+        self.l_hip = asset_cfg.l_hip
+        self.l_up = asset_cfg.l_up
+        self.l_low = asset_cfg.l_low
+
         if not self.headless:
             self.set_camera(self.cfg.viewer.pos, self.cfg.viewer.lookat)
         self._init_buffers()
@@ -673,9 +681,9 @@ class LeggedRobot(BaseTask):
 
     def foot_position_in_hip_frame(self, angles, l_hip_sign=1):
         theta_ab, theta_hip, theta_knee = angles[:, 0], angles[:, 1], angles[:, 2]
-        l_up = 0.2
-        l_low = 0.2
-        l_hip = 0.08505 * l_hip_sign
+        l_up = self.l_up
+        l_low = self.l_low
+        l_hip = self.l_hip * l_hip_sign
         leg_distance = torch.sqrt(l_up**2 + l_low**2 +
                                 2 * l_up * l_low * torch.cos(theta_knee))
         eff_swing = theta_hip + theta_knee / 2
@@ -694,7 +702,7 @@ class LeggedRobot(BaseTask):
         for i in range(4):
             foot_positions[:, i * 3:i * 3 + 3].copy_(
                 self.foot_position_in_hip_frame(foot_angles[:, i * 3: i * 3 + 3], l_hip_sign=(-1)**(i)))
-        foot_positions = foot_positions + HIP_OFFSETS.reshape(12,).to(self.device)
+        foot_positions = foot_positions + self.hip_offsets.reshape(12,).to(self.device)
         return foot_positions
 
     def _prepare_reward_function(self):

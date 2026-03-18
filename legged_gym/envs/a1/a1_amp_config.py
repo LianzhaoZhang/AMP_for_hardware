@@ -88,6 +88,17 @@ class A1AMPCfg( LeggedRobotCfg ):
             "base", "FL_calf", "FR_calf", "RL_calf", "RR_calf",
             "FL_thigh", "FR_thigh", "RL_thigh", "RR_thigh"]
         self_collisions = 0 # 1 to disable, 0 to enable...bitwise filter
+
+        com_offset = [0.012731, 0.002186, 0.000515]
+        hip_offsets = [
+            [0.183, 0.047, 0.],    # FL
+            [0.183, -0.047, 0.],   # FR
+            [-0.183, 0.047, 0.],   # RL
+            [-0.183, -0.047, 0.],  # RR
+        ]
+        l_hip = 0.08505
+        l_up = 0.2
+        l_low = 0.2
   
     class domain_rand:
         randomize_friction = True
