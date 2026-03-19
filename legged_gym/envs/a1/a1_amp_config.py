@@ -34,7 +34,7 @@ from legged_gym.envs.base.legged_robot_config import LeggedRobotCfg, LeggedRobot
 from legged_gym import LEGGED_GYM_ROOT_DIR
 
 # MOTION_FILES = glob.glob(os.path.join(LEGGED_GYM_ROOT_DIR, 'datasets/mocap_motions/*'))
-MOTION_FILES = glob.glob(os.path.join(LEGGED_GYM_ROOT_DIR, 'datasets/nmpc_wbc_motions0311_pinocchio/*'))
+MOTION_FILES = glob.glob(os.path.join(LEGGED_GYM_ROOT_DIR, 'datasets/a1_nmpc_wbc_motions0311_pinocchio/*'))
 
 class A1AMPCfg( LeggedRobotCfg ):
 
