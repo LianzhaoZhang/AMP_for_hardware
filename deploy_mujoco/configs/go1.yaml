@@ -25,4 +25,9 @@ cmd_scale: [2.0, 2.0, 0.25]
 num_actions: 12
 num_obs: 42
 
-cmd_init: [0.5, 0, 0]
+clip_observations: 100.0
+clip_actions: 100.0
+
+# 站立过渡阶段
+standup_duration: 1.0
+stabilize_duration: 0.5
