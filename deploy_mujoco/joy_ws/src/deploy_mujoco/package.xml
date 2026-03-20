@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>deploy_mujoco</name>
+  <version>0.0.0</version>
+  <description>Mujoco deployment node driven by ROS cmd_vel.</description>
+
+  <maintainer email="liaoqiayuan@gmail.com">Qiayuan Liao</maintainer>
+  <author email="liaoqiayuan@gmail.com">Qiayuan Liao</author>
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>geometry_msgs</build_depend>
+  <build_depend>rospy</build_depend>
+
+  <build_export_depend>geometry_msgs</build_export_depend>
+  <build_export_depend>rospy</build_export_depend>
+
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>joy</exec_depend>
+  <exec_depend>joy_teleop</exec_depend>
+  <exec_depend>rospy</exec_depend>
+</package>

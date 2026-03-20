@@ -57,3 +57,7 @@ runs
 # other
 *.egg-info
 __pycache__
+
+deploy_mujoco/joy_ws/build/**
+deploy_mujoco/joy_ws/devel/**
+*.onnx
