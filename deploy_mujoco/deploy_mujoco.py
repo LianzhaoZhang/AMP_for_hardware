@@ -11,21 +11,19 @@ from legged_gym import LEGGED_GYM_ROOT_DIR
 import torch
 import yaml
 
-# Go1 关节名称 (与 Isaac Gym URDF 解析顺序一致: FR, FL, RR, RL)
 JOINT_NAMES = [
-    'FR_hip_joint', 'FR_thigh_joint', 'FR_calf_joint',
     'FL_hip_joint', 'FL_thigh_joint', 'FL_calf_joint',
-    'RR_hip_joint', 'RR_thigh_joint', 'RR_calf_joint',
+    'FR_hip_joint', 'FR_thigh_joint', 'FR_calf_joint',
     'RL_hip_joint', 'RL_thigh_joint', 'RL_calf_joint',
+    'RR_hip_joint', 'RR_thigh_joint', 'RR_calf_joint',
 ]
 
 ACTUATOR_NAMES = [
-    'FR_hip', 'FR_thigh', 'FR_calf',
     'FL_hip', 'FL_thigh', 'FL_calf',
-    'RR_hip', 'RR_thigh', 'RR_calf',
+    'FR_hip', 'FR_thigh', 'FR_calf',
     'RL_hip', 'RL_thigh', 'RL_calf',
+    'RR_hip', 'RR_thigh', 'RR_calf',
 ]
-
 
 def get_gravity_orientation(quaternion):
     """从 MuJoCo 四元数 (w,x,y,z) 计算投影重力"""
@@ -68,11 +66,13 @@ def quat_to_rpy(quat_wxyz):
 class KeyboardController:
     """通过 WASDQER 键盘控制速度指令 (非阻塞)"""
 
-    VEL_STEP = [0.1, 0.1, 0.2]   # linear_x, linear_y, angular_z 每次按键的增量
-    VEL_MAX = [0.8, 1.0, 2.0]    # 速度上限
+    DEFAULT_VEL_STEP = [0.1, 0.1, 0.2]   # linear_x, linear_y, angular_z 每次按键的增量
+    DEFAULT_VEL_MAX = [0.8, 1.0, 2.0]    # 速度上限
 
-    def __init__(self, cmd_array):
+    def __init__(self, cmd_array, vel_step=None, vel_max=None):
         self.cmd = cmd_array
+        self.vel_step = np.array(vel_step if vel_step is not None else self.DEFAULT_VEL_STEP, dtype=np.float32)
+        self.vel_max = np.array(vel_max if vel_max is not None else self.DEFAULT_VEL_MAX, dtype=np.float32)
         self._running = True
         self._thread = threading.Thread(target=self._loop, daemon=True)
         self._thread.start()
@@ -86,17 +86,17 @@ class KeyboardController:
                 ch = sys.stdin.read(1).lower()
                 updated = True
                 if ch == 'w':
-                    self.cmd[0] = min(self.cmd[0] + self.VEL_STEP[0], self.VEL_MAX[0])
+                    self.cmd[0] = min(self.cmd[0] + self.vel_step[0], self.vel_max[0])
                 elif ch == 's':
-                    self.cmd[0] = max(self.cmd[0] - self.VEL_STEP[0], -self.VEL_MAX[0])
+                    self.cmd[0] = max(self.cmd[0] - self.vel_step[0], -self.vel_max[0])
                 elif ch == 'a':
-                    self.cmd[1] = min(self.cmd[1] + self.VEL_STEP[1], self.VEL_MAX[1])
+                    self.cmd[1] = min(self.cmd[1] + self.vel_step[1], self.vel_max[1])
                 elif ch == 'd':
-                    self.cmd[1] = max(self.cmd[1] - self.VEL_STEP[1], -self.VEL_MAX[1])
+                    self.cmd[1] = max(self.cmd[1] - self.vel_step[1], -self.vel_max[1])
                 elif ch == 'q':
-                    self.cmd[2] = min(self.cmd[2] + self.VEL_STEP[2], self.VEL_MAX[2])
+                    self.cmd[2] = min(self.cmd[2] + self.vel_step[2], self.vel_max[2])
                 elif ch == 'e':
-                    self.cmd[2] = max(self.cmd[2] - self.VEL_STEP[2], -self.VEL_MAX[2])
+                    self.cmd[2] = max(self.cmd[2] - self.vel_step[2], -self.vel_max[2])
                 elif ch == 'r':
                     self.cmd[:] = 0.0
                 else:
@@ -141,6 +141,8 @@ if __name__ == "__main__":
         dof_vel_scale = config["dof_vel_scale"]
         action_scale = config["action_scale"]
         cmd_scale = np.array(config["cmd_scale"], dtype=np.float32)
+        cmd_max = np.array(config.get("cmd_max", KeyboardController.DEFAULT_VEL_MAX), dtype=np.float32)
+        cmd_step = np.array(config.get("cmd_step", KeyboardController.DEFAULT_VEL_STEP), dtype=np.float32)
 
         num_actions = config["num_actions"]
         num_obs = config["num_obs"]
@@ -193,7 +195,7 @@ if __name__ == "__main__":
     policy = torch.jit.load(policy_path)
 
     # 启动键盘控制
-    kb = KeyboardController(cmd)
+    kb = KeyboardController(cmd, vel_step=cmd_step, vel_max=cmd_max)
     print("键盘控制已启动:")
     print("  W/S: 前进/后退")
     print("  A/D: 左移/右移")
@@ -201,7 +203,7 @@ if __name__ == "__main__":
     print("  R:   停止 (归零)")
     print("  Ctrl+C: 退出")
 
-    with mujoco.viewer.launch_passive(m, d) as viewer:
+    with mujoco.viewer.launch_passive(m, d, show_left_ui=False, show_right_ui=False) as viewer:
         start = time.time()
         while viewer.is_running() and time.time() - start < simulation_duration and kb._running:
             step_start = time.time()
@@ -218,6 +220,9 @@ if __name__ == "__main__":
 
             mujoco.mj_step(m, d)
 
+            # 使用仿真步之后的状态与 Isaac Gym 的 post_physics_step 对齐。
+            qj_full = d.qpos[joint_qpos_addrs]
+            dqj_full = d.qvel[joint_dof_addrs]
             counter += 1
             sim_time = counter * simulation_dt
 

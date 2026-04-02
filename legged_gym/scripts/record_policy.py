@@ -68,7 +68,7 @@ def play(args):
         export_policy_as_jit(ppo_runner.alg.actor_critic, path)
         print('Exported policy as jit script to: ', path)
 
-    camera_rot = 0
+    camera_rot = 45 * np.pi / 180
     camera_rot_per_sec = np.pi / 6
     img_idx = 0
 
@@ -77,6 +77,7 @@ def play(args):
     print(f'gathering {num_frames} frames')
     video = None
     video_path = os.path.join(LEGGED_GYM_ROOT_DIR, 'record.mp4')
+    progress_interval = max(1, num_frames // 20)
 
     for i in range(num_frames):
         actions = policy(obs.detach())
@@ -84,8 +85,8 @@ def play(args):
 
         # Reset camera position.
         look_at = np.array(env.root_states[0, :3].cpu(), dtype=np.float64)
-        camera_rot = (camera_rot + camera_rot_per_sec * env.dt) % (2 * np.pi)
-        camera_relative_position = 1.2 * np.array([np.cos(camera_rot), np.sin(camera_rot), 0.45])
+        # camera_rot = (camera_rot + camera_rot_per_sec * env.dt) % (2 * np.pi)
+        camera_relative_position = 2.0 * np.array([np.cos(camera_rot), np.sin(camera_rot), 0.45])
         env.set_camera(look_at + camera_relative_position, look_at)
 
         if RECORD_FRAMES:
@@ -100,6 +101,12 @@ def play(args):
                 video = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc(*'MP4V'), int(1 / env.dt), (img.shape[1], img.shape[0]))
             video.write(img)
             img_idx += 1
+
+        if (i + 1) % progress_interval == 0 or i + 1 == num_frames:
+            progress = 100.0 * (i + 1) / num_frames
+            print(f"\rRecording progress: {i + 1}/{num_frames} frames ({progress:5.1f}%)", end="", flush=True)
+
+    print()
 
     if video is not None:
         video.release()
